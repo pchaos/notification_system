@@ -1,0 +1,80 @@
+{# announcements/templates/announcements/announcement_form.html #}
+{% extends 'announcements/base.html' %}
+
+{% block title %}{{ form_title }} - 公告通知系统{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6 mb-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ form_title }}</h1>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    {# 遍历所有非多对多和多对多字段 #}
+    {% for field in form %}
+    {% if field.name != 'target_users' and field.name != 'target_groups' %}
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+        {{ field.label }}
+        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+      </label>
+      {{ field }}
+      {% if field.help_text %}
+      <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+      {% endif %}
+      {% for error in field.errors %}
+      <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {# 单独处理 target_users 和 target_groups 字段，使用多选框 #}
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        {{ form.target_users.label }}
+      </label>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        {% for choice in form.target_users %}
+        <div class="flex items-center">
+          {{ choice.tag }}
+          <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">{{ choice.choice_label }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% for error in form.target_users.errors %}
+      <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+      {% endfor %}
+      <p class="mt-1 text-sm text-gray-500">如果未选择任何用户或用户组，公告将对所有用户可见。</p>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        {{ form.target_groups.label }}
+      </label>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        {% for choice in form.target_groups %}
+        <div class="flex items-center">
+          {{ choice.tag }}
+          <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">{{ choice.choice_label }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% for error in form.target_groups.errors %}
+      <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="flex justify-end space-x-4">
+      <button type="submit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md shadow-lg transition duration-300">
+        保存公告
+      </button>
+      <a href="{% url 'announcement_list' %}"
+        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-5 rounded-md shadow-lg transition duration-300">
+        取消
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

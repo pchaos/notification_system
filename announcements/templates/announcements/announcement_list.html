@@ -1,0 +1,102 @@
+{# announcements/templates/announcements/announcement_list.html #}
+{% extends 'announcements/base.html' %}
+
+{% block title %}公告列表 - 公告通知系统{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6 mb-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">公告列表</h1>
+
+  <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+    <form method="get" action="{% url 'announcement_list' %}" class="flex-grow flex items-center gap-2">
+      <input type="text" name="q" value="{{ query }}" placeholder="搜索标题或内容..."
+        class="form-control flex-grow p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      <button type="submit"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-300">搜索</button>
+    </form>
+
+    <div class="flex items-center gap-2">
+      <label for="page_size_select" class="text-gray-700">每页显示:</label>
+      <select id="page_size_select" onchange="changePageSize(this.value)"
+        class="form-control p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        {% for size in page_sizes %}
+        <option value="{{ size }}" {% if size==current_page_size %}selected{% endif %}>{{ size }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% if announcements %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for announcement in announcements %}
+    <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-5 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center mb-2">
+          <span
+            class="text-sm font-medium px-2 py-1 rounded-full
+                                {% if announcement.emergency_level == 'urgent' %}bg-red-500 text-white{% elif announcement.emergency_level == 'high' %}bg-orange-500 text-white{% elif announcement.emergency_level == 'medium' %}bg-yellow-500 text-gray-800{% else %}bg-gray-300 text-gray-800{% endif %}">
+            {{ announcement.get_emergency_level_display }}
+          </span>
+          {% if announcement.is_read %}
+          <span class="ml-2 text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">已读</span>
+          {% else %}
+          <span class="ml-2 text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">未读</span>
+          {% endif %}
+        </div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">
+          <a href="{% url 'announcement_detail' announcement.pk %}" class="hover:text-blue-600 transition duration-300">
+            {{ announcement.title }}
+          </a>
+        </h2>
+        <p class="text-sm text-gray-600 mb-3">
+          分类: <span class="font-medium">{{ announcement.category.name|default:"无" }}</span> |
+          发布者: <span class="font-medium">{{ announcement.author.username }}</span>
+        </p>
+        <p class="text-gray-700 text-sm line-clamp-3">{{ announcement.content|striptags|truncatechars:150 }}</p>
+      </div>
+      <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+        <span>发布于: {{ announcement.publish_at|date:"Y-m-d H:i" }}</span>
+        <div class="flex space-x-2">
+          <a href="{% url 'announcement_detail' announcement.pk %}" class="text-blue-600 hover:underline">查看详情</a>
+          {% if perms.announcements.change_announcement or user.is_superuser %} {# 检查编辑权限 #}
+          <a href="{% url 'announcement_edit' announcement.pk %}" class="text-green-600 hover:underline">编辑</a>
+          {% endif %}
+          {% if perms.announcements.delete_announcement or user.is_superuser %} {# 检查删除权限 #}
+          <a href="{% url 'announcement_delete' announcement.pk %}" class="text-red-600 hover:underline">删除</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# 分页导航 #}
+  <div class="flex justify-center mt-8 space-x-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&page_size={{ current_page_size }}"
+      class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md transition duration-300">上一页</a>
+    {% endif %}
+
+    <span class="text-gray-700 py-2 px-4">
+      页 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&page_size={{ current_page_size }}"
+      class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md transition duration-300">下一页</a>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="text-gray-600 text-center py-10">暂无公告可显示。</p>
+  {% endif %}
+</div>
+
+<script>
+  function changePageSize(size) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('page_size', size);
+    urlParams.delete('page'); // 重置页码到第一页
+    window.location.search = urlParams.toString();
+  }
+</script>
+{% endblock %}

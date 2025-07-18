@@ -1,0 +1,45 @@
+{# announcements/templates/announcements/announcement_detail.html #}
+{% extends 'announcements/base.html' %}
+
+{% block title %}{{ announcement.title }} - 公告详情{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6 mb-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ announcement.title }}</h1>
+
+  <div class="flex flex-wrap items-center text-sm text-gray-600 mb-4 gap-2">
+    <span class="font-medium">分类: {{ announcement.category.name|default:"无" }}</span>
+    <span class="mx-1">|</span>
+    <span class="font-medium">发布者: {{ announcement.author.username }}</span>
+    <span class="mx-1">|</span>
+    <span class="font-medium">发布时间: {{ announcement.publish_at|date:"Y-m-d H:i" }}</span>
+    <span class="mx-1">|</span>
+    <span
+      class="font-medium px-2 py-1 rounded-full
+            {% if announcement.emergency_level == 'urgent' %}bg-red-500 text-white{% elif announcement.emergency_level == 'high' %}bg-orange-500 text-white{% elif announcement.emergency_level == 'medium' %}bg-yellow-500 text-gray-800{% else %}bg-gray-300 text-gray-800{% endif %}">
+      紧急程度: {{ announcement.get_emergency_level_display }}
+    </span>
+  </div>
+
+  <hr class="my-6 border-gray-200">
+
+  <div class="markdown-content text-gray-800 leading-relaxed">
+    {{ rendered_content|safe }} {# 渲染后的HTML内容 #}
+  </div>
+
+  <hr class="my-6 border-gray-200">
+
+  <div class="flex justify-end space-x-4">
+    {% if perms.announcements.change_announcement or user.is_superuser %}
+    <a href="{% url 'announcement_edit' announcement.pk %}"
+      class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-300">编辑公告</a>
+    {% endif %}
+    {% if perms.announcements.delete_announcement or user.is_superuser %}
+    <a href="{% url 'announcement_delete' announcement.pk %}"
+      class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-300">删除公告</a>
+    {% endif %}
+    <a href="{% url 'announcement_list' %}"
+      class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-md shadow-md transition duration-300">返回列表</a>
+  </div>
+</div>
+{% endblock %}
